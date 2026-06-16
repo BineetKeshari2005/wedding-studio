@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
 import {
   signUp as svcSignUp,
   signIn as svcSignIn,
   signOut as svcSignOut,
-  getProfile as svcGetProfile,
+  getCurrentUser as svcGetCurrentUser,
   updateProfile as svcUpdateProfile,
   updatePassword as svcUpdatePassword,
   deductCredit as svcDeductCredit,
@@ -18,7 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, inviteCode?: string) => Promise<void>;
+  signup: (email: string, password: string, inviteCode?: string, name?: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   deductCredit: (amount?: number) => Promise<void>;
@@ -39,10 +39,51 @@ export const useAuth = (): AuthContextType => {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<{ uid: string; email: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const signup = useCallback(async (email: string, password: string, inviteCode?: string) => {
-    const p = await svcSignUp(email, password, inviteCode);
+  // Initialize auth state on mount
+  useEffect(() => {
+    let mounted = true;
+    const initAuth = async () => {
+      try {
+        const p = await svcGetCurrentUser();
+        if (mounted) {
+          if (p) {
+            setUser({ uid: p.uid, email: p.email });
+            setProfile(p);
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
+        }
+      } catch (err) {
+        if (mounted) {
+          setUser(null);
+          setProfile(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    initAuth();
+
+    // Listen for unauthorized events to clear state
+    const handleUnauthorized = () => {
+      setUser(null);
+      setProfile(null);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, []);
+
+  const signup = useCallback(async (email: string, password: string, inviteCode?: string, name?: string) => {
+    const p = await svcSignUp(email, password, inviteCode, name);
     setUser({ uid: p.uid, email: p.email });
     setProfile(p);
   }, []);
@@ -71,7 +112,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    const p = svcGetProfile();
+    const p = await svcGetCurrentUser();
     if (p) setProfile({ ...p });
   }, []);
 

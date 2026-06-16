@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import StudioSidebar from "@/components/StudioSidebar";
-import { mockGetProjects, mockDeleteProject, type MockProject } from "@/services/firebaseMock";
+import { getProjects, deleteProject, type Project } from "@/lib/services/databaseService";
 import { FolderOpen, Trash2, Eye, Plus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -22,19 +22,19 @@ const Projects: React.FC = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [projects, setProjects] = useState<MockProject[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    mockGetProjects().then((data) => {
+    getProjects().then((data) => {
       setProjects(data);
       setLoading(false);
     });
   }, [isAuthenticated]);
 
   const handleDelete = async (id: string) => {
-    await mockDeleteProject(id);
+    await deleteProject(id);
     setProjects((prev) => prev.filter((p) => p.id !== id));
     toast({ title: "Deleted", description: "Project removed successfully." });
   };

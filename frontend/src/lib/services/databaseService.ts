@@ -1,12 +1,28 @@
-/**
- * Database Service — Abstraction layer for project CRUD.
- * Currently backed by in-memory mocks. Swap the import source
- * to connect Firebase Firestore, Supabase, or any database.
- */
+import { api } from "../api";
 
-export {
-  mockGetProjects as getProjects,
-  mockSaveProject as saveProject,
-  mockDeleteProject as deleteProject,
-  type MockProject as Project,
-} from "@/services/firebaseMock";
+export interface Project {
+  id: string;
+  userId: string;
+  name: string;
+  imageUrl: string | null;
+  palette: string[];
+  options: Record<string, string>;
+  stages: Record<string, string>;
+  logoUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getProjects = async (): Promise<Project[]> => {
+  const response = await api.get("/projects");
+  return response.data.data.projects;
+};
+
+export const saveProject = async (project: Omit<Project, "id" | "userId" | "createdAt" | "updatedAt">): Promise<Project> => {
+  const response = await api.post("/projects", project);
+  return response.data.data.project;
+};
+
+export const deleteProject = async (id: string): Promise<void> => {
+  await api.delete(`/projects/${id}`);
+};
