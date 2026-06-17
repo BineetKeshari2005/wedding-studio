@@ -212,6 +212,36 @@ const JOURNEY_STEPS = [
   "Photo Booth"
 ];
 
+const MOCK_CONCEPTS = JOURNEY_STEPS.reduce((acc, step) => {
+  acc[step] = [
+    {
+      id: `${step.toLowerCase().replace(" ", "_")}_1`,
+      title: `${step} Concept 1`,
+      description: `Elegant and luxurious design for the ${step.toLowerCase()} area.`,
+      image: "/images/signup.png"
+    },
+    {
+      id: `${step.toLowerCase().replace(" ", "_")}_2`,
+      title: `${step} Concept 2`,
+      description: `Modern minimal interpretation of the ${step.toLowerCase()}.`,
+      image: "/images/signup.png"
+    },
+    {
+      id: `${step.toLowerCase().replace(" ", "_")}_3`,
+      title: `${step} Concept 3`,
+      description: `Royal and opulent theme tailored for your ${step.toLowerCase()}.`,
+      image: "/images/signup.png"
+    },
+    {
+      id: `${step.toLowerCase().replace(" ", "_")}_4`,
+      title: `${step} Concept 4`,
+      description: `Warm floral arrangement highlighting the ${step.toLowerCase()}.`,
+      image: "/images/signup.png"
+    }
+  ];
+  return acc;
+}, {});
+
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12" />
@@ -261,6 +291,49 @@ export default function Studio() {
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [promptInput, setPromptInput] = useState("");
+  
+  // Phase 2 State
+  const [selectedConcepts, setSelectedConcepts] = useState({
+    Entry: [], Lounge: [], Dining: [], Bar: [], Stage: [], "Photo Booth": []
+  });
+  const [completedSections, setCompletedSections] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const currentStepName = JOURNEY_STEPS[currentStepIndex];
+  const hasSelection = selectedConcepts[currentStepName]?.length > 0;
+
+  const handleSaveAndContinue = () => {
+    if (!completedSections.includes(currentStepName)) {
+      setCompletedSections(prev => [...prev, currentStepName]);
+    }
+    if (currentStepIndex < JOURNEY_STEPS.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    }
+  };
+
+  const toggleSelection = (concept) => {
+    setSelectedConcepts(prev => {
+      const currentSelections = prev[currentStepName];
+      const isAlreadySelected = currentSelections.some(c => c.id === concept.id);
+      const newSelections = isAlreadySelected 
+        ? currentSelections.filter(c => c.id !== concept.id)
+        : [...currentSelections, concept];
+      return { ...prev, [currentStepName]: newSelections };
+    });
+  };
+
+  const toggleFavorite = (e, conceptId) => {
+    e.stopPropagation();
+    setFavorites(prev => 
+      prev.includes(conceptId) ? prev.filter(id => id !== conceptId) : [...prev, conceptId]
+    );
+  };
+
+  const handlePreview = (e, imageUrl) => {
+    e.stopPropagation();
+    setPreviewImage(imageUrl);
+  };
 
   const [editingCard, setEditingCard] = useState(null);
   const [activeModalDropdown, setActiveModalDropdown] = useState(null);
@@ -827,6 +900,26 @@ export default function Studio() {
       />
       <div className="loverai-wedding-overlay" />
       
+      {/* Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 md:p-8" onClick={() => setPreviewImage(null)}>
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition bg-black/40 rounded-full p-2 border border-white/10"
+            onClick={() => setPreviewImage(null)}
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-full object-contain rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/20"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {/* Outer Container with Premium Glassmorphism */}
       <div className="relative z-10 mx-auto max-w-[1380px] w-full h-[calc(100vh-32px)] max-h-[960px] bg-white/5 backdrop-blur-2xl border border-white/15 rounded-[24px] shadow-[0_30px_70px_rgba(0,0,0,0.45)] p-4 md:p-5 lg:p-6 flex flex-col">
         
@@ -1105,17 +1198,23 @@ export default function Studio() {
             <div className="border border-white/10 rounded-[16px] bg-[#160f0d]/40 backdrop-blur-md px-6 py-3 flex-shrink-0 mb-3">
               <div className="flex items-center justify-center w-full">
                 {JOURNEY_STEPS.map((step, index) => {
-                  const isCompleted = index < currentStepIndex;
+                  const isCompleted = completedSections.includes(step);
                   const isCurrent = index === currentStepIndex;
-                  const isLocked = index > currentStepIndex;
+                  const isLocked = index > completedSections.length;
                   
                   return (
-                    <div key={step} className="flex items-center">
+                    <div 
+                      key={step} 
+                      className={`flex items-center ${!isLocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
+                      onClick={() => {
+                        if (!isLocked) setCurrentStepIndex(index);
+                      }}
+                    >
                       {/* Step Node */}
                       <div className="flex flex-col items-center gap-1 w-[72px]">
                         <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 ${
                           isCurrent 
-                            ? 'border-[#ebd8c7] text-[#ebd8c7] bg-[#ebd8c7]/10 shadow-[0_0_12px_rgba(235,216,199,0.3)]' 
+                            ? 'border-[#ebd8c7] text-[#ebd8c7] bg-[#ebd8c7]/10 shadow-[0_0_12px_rgba(235,216,199,0.3)] scale-110' 
                             : isCompleted 
                               ? 'border-[#ebd8c7] text-[#ebd8c7] bg-[#ebd8c7]/15' 
                               : 'border-white/15 text-white/30 bg-white/5'
@@ -1136,7 +1235,7 @@ export default function Studio() {
                       {/* Connector */}
                       {index < JOURNEY_STEPS.length - 1 && (
                         <div className="flex items-center justify-center w-6 mb-4">
-                          <svg className={`w-3 h-3 ${index < currentStepIndex ? 'text-[#ebd8c7]' : 'text-white/15'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className={`w-3 h-3 ${completedSections.includes(step) || index < currentStepIndex ? 'text-[#ebd8c7]' : 'text-white/15'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6" />
                           </svg>
                         </div>
@@ -1194,35 +1293,123 @@ export default function Studio() {
             <div className="flex-1 min-h-0 flex flex-col gap-3 w-full">
               {/* Top Row */}
               <div className="flex-1 min-h-0 flex gap-3 w-full">
-                {[1, 2].map(num => (
-                  <div key={num} className="flex-1 h-full rounded-[18px] border border-white/12 bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-4 hover:border-[#ebd8c7]/30 hover:bg-white/[0.07] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-300 cursor-pointer group relative overflow-hidden">
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/15 bg-black/25 flex items-center justify-center text-white/40 mb-3 group-hover:scale-110 group-hover:text-[#ebd8c7] group-hover:border-[#ebd8c7]/40 transition-all duration-500">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <path d="M21 15l-5-5L5 21" />
-                      </svg>
+                {MOCK_CONCEPTS[currentStepName]?.slice(0, 2).map((concept) => {
+                  const isSelected = selectedConcepts[currentStepName].some(c => c.id === concept.id);
+                  const isFavorited = favorites.includes(concept.id);
+                  
+                  return (
+                    <div 
+                      key={concept.id} 
+                      onClick={() => toggleSelection(concept)}
+                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-2 ring-inset ring-[#ebd8c7] shadow-[0_0_25px_rgba(235,216,199,0.25)] hover:shadow-[0_0_35px_rgba(235,216,199,0.4)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#ebd8c7]/40 hover:bg-white/[0.07]'}`}
+                    >
+                      {/* Background Image */}
+                      <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+                      
+                      {/* Selection Overlay */}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-[#ebd8c7]/5 mix-blend-screen z-10 pointer-events-none" />
+                      )}
+                      
+                      {/* Top-Left: Selection Badge */}
+                      {isSelected && (
+                        <div className="absolute top-3 left-3 bg-[#ebd8c7] rounded-full w-5 h-5 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)] z-20">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e1815" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      )}
+
+                      {/* Top-Right: Favorite Icon */}
+                      <button 
+                        onClick={(e) => toggleFavorite(e, concept.id)}
+                        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition z-20"
+                      >
+                        <svg className={`w-4 h-4 ${isFavorited ? 'fill-[#ff4d4d] text-[#ff4d4d]' : 'text-white'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                      </button>
+                      
+                      {/* Center: Expand/Preview */}
+                      <button 
+                        onClick={(e) => handlePreview(e, concept.image)}
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/30 bg-black/40 backdrop-blur-md flex items-center justify-center text-white/70 mb-2 group-hover:scale-110 group-hover:text-white group-hover:border-white/50 transition-all duration-500 z-20 relative"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 3 21 3 21 9" />
+                          <polyline points="9 21 3 21 3 15" />
+                          <line x1="21" y1="3" x2="14" y2="10" />
+                          <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                      </button>
+
+                      {/* Bottom Text */}
+                      <div className="absolute bottom-4 left-4 right-4 text-left z-20">
+                         <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
+                         <span className="text-white/70 text-[10px] md:text-xs font-semibold tracking-wide block truncate mt-0.5">{concept.description}</span>
+                      </div>
                     </div>
-                    <span className="text-[#ebd8c7] font-bold text-sm md:text-base tracking-[0.1em] uppercase mb-0.5 drop-shadow-md">Concept {num}</span>
-                    <span className="text-white/40 text-[10px] font-semibold tracking-wide">Ready for generation</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {/* Bottom Row */}
               <div className="flex-1 min-h-0 flex gap-3 w-full">
-                {[3, 4].map(num => (
-                  <div key={num} className="flex-1 h-full rounded-[18px] border border-white/12 bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-4 hover:border-[#ebd8c7]/30 hover:bg-white/[0.07] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-300 cursor-pointer group relative overflow-hidden">
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/15 bg-black/25 flex items-center justify-center text-white/40 mb-3 group-hover:scale-110 group-hover:text-[#ebd8c7] group-hover:border-[#ebd8c7]/40 transition-all duration-500">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <path d="M21 15l-5-5L5 21" />
-                      </svg>
+                {MOCK_CONCEPTS[currentStepName]?.slice(2, 4).map((concept) => {
+                  const isSelected = selectedConcepts[currentStepName].some(c => c.id === concept.id);
+                  const isFavorited = favorites.includes(concept.id);
+                  
+                  return (
+                    <div 
+                      key={concept.id} 
+                      onClick={() => toggleSelection(concept)}
+                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-2 ring-inset ring-[#ebd8c7] shadow-[0_0_25px_rgba(235,216,199,0.25)] hover:shadow-[0_0_35px_rgba(235,216,199,0.4)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#ebd8c7]/40 hover:bg-white/[0.07]'}`}
+                    >
+                      <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+                      
+                      {/* Selection Overlay */}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-[#ebd8c7]/5 mix-blend-screen z-10 pointer-events-none" />
+                      )}
+                      
+                      {/* Top-Left: Selection Badge */}
+                      {isSelected && (
+                        <div className="absolute top-3 left-3 bg-[#ebd8c7] rounded-full w-5 h-5 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)] z-20">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e1815" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      )}
+
+                      <button 
+                        onClick={(e) => toggleFavorite(e, concept.id)}
+                        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition z-20"
+                      >
+                        <svg className={`w-4 h-4 ${isFavorited ? 'fill-[#ff4d4d] text-[#ff4d4d]' : 'text-white'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => handlePreview(e, concept.image)}
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/30 bg-black/40 backdrop-blur-md flex items-center justify-center text-white/70 mb-2 group-hover:scale-110 group-hover:text-white group-hover:border-white/50 transition-all duration-500 z-20 relative"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 3 21 3 21 9" />
+                          <polyline points="9 21 3 21 3 15" />
+                          <line x1="21" y1="3" x2="14" y2="10" />
+                          <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                      </button>
+
+                      <div className="absolute bottom-4 left-4 right-4 text-left z-20">
+                         <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
+                         <span className="text-white/70 text-[10px] md:text-xs font-semibold tracking-wide block truncate mt-0.5">{concept.description}</span>
+                      </div>
                     </div>
-                    <span className="text-[#ebd8c7] font-bold text-sm md:text-base tracking-[0.1em] uppercase mb-0.5 drop-shadow-md">Concept {num}</span>
-                    <span className="text-white/40 text-[10px] font-semibold tracking-wide">Ready for generation</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -1234,21 +1421,26 @@ export default function Studio() {
                 </svg>
                 <p>These designs are generated based on your preferences. Your selected concepts will be used as references for upcoming sections.</p>
               </div>
-              <button 
-                type="button"
-                disabled={currentStepIndex === JOURNEY_STEPS.length - 1}
-                onClick={() => setCurrentStepIndex(c => Math.min(JOURNEY_STEPS.length - 1, c + 1))}
-                className="px-6 py-2.5 rounded-[12px] bg-gradient-to-r from-[#ebd8c7] to-[#c57e44] text-[#1e1815] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-extrabold uppercase tracking-widest transition-all shadow-[0_8px_24px_rgba(235,216,199,0.25)] flex items-center gap-2 flex-shrink-0"
-              >
-                SAVE & CONTINUE 
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14" />
-                  <path d="m12 5 7 7-7 7" />
-                </svg>
-              </button>
+              
+              <div className="flex flex-col items-end gap-1.5">
+                {!hasSelection && (
+                  <span className="text-[10px] text-white/50 italic mr-2">Select at least one concept to continue.</span>
+                )}
+                <button 
+                  type="button"
+                  disabled={!hasSelection}
+                  onClick={handleSaveAndContinue}
+                  className={`px-6 py-2.5 rounded-[12px] bg-gradient-to-r from-[#ebd8c7] to-[#c57e44] text-[#1e1815] transition-all shadow-[0_8px_24px_rgba(235,216,199,0.25)] flex items-center gap-2 flex-shrink-0 text-xs font-extrabold uppercase tracking-widest ${!hasSelection ? 'opacity-40 grayscale cursor-not-allowed' : 'hover:opacity-90'}`}
+                >
+                  SAVE & CONTINUE 
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
