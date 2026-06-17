@@ -203,6 +203,28 @@ const UploadIcon = () => (
   </svg>
 );
 
+const JOURNEY_STEPS = [
+  "Entry",
+  "Lounge",
+  "Dining",
+  "Bar",
+  "Stage",
+  "Photo Booth"
+];
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
 export default function Studio() {
   const navigate = useNavigate();
   const { user, profile, logout } = useAuth();
@@ -236,6 +258,9 @@ export default function Studio() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [promptInput, setPromptInput] = useState("");
 
   const [editingCard, setEditingCard] = useState(null);
   const [activeModalDropdown, setActiveModalDropdown] = useState(null);
@@ -803,12 +828,13 @@ export default function Studio() {
       <div className="loverai-wedding-overlay" />
       
       {/* Outer Container with Premium Glassmorphism */}
-      <div className="relative z-10 mx-auto max-w-[1380px] w-full h-[calc(100vh-32px)] max-h-[960px] bg-white/5 backdrop-blur-2xl border border-white/15 rounded-[24px] shadow-[0_30px_70px_rgba(0,0,0,0.45)] p-4 md:p-6 lg:p-7 flex flex-col">
+      <div className="relative z-10 mx-auto max-w-[1380px] w-full h-[calc(100vh-32px)] max-h-[960px] bg-white/5 backdrop-blur-2xl border border-white/15 rounded-[24px] shadow-[0_30px_70px_rgba(0,0,0,0.45)] p-4 md:p-5 lg:p-6 flex flex-col">
         
-        {/* Header Section Inside Outer Container */}
-        <header className="mb-4 flex flex-col gap-4 md:grid md:grid-cols-[1fr_auto_1fr] md:items-center px-1 relative flex-shrink-0">
+        {/* Compact Header Section */}
+        <header className="mb-3 relative flex items-center justify-between w-full flex-shrink-0">
+          
           {/* Left Side: Navigation Pill Buttons */}
-          <div className="flex items-center gap-2 justify-start">
+          <div className="flex flex-wrap items-center gap-2 justify-start">
             <button
               type="button"
               onClick={() => navigate(-1)}
@@ -836,14 +862,11 @@ export default function Studio() {
             </button>
           </div>
 
-          {/* Center: Title & Subtitle */}
-          <div className="text-center">
-            <h1 className="font-['Cormorant_Garamond'] text-2xl md:text-[30px] font-semibold tracking-wide text-white">
+          {/* Center: Title */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+            <h1 className="font-['Cormorant_Garamond'] text-xl md:text-2xl font-semibold tracking-wide text-white leading-tight whitespace-nowrap">
               Create Your Wedding Vision
             </h1>
-            <span className="text-[11px] tracking-[0.2em] font-semibold text-white/70 block mt-1 uppercase">
-              SEE YOUR UNIQUE WEDDING DESIGN COME TO LIFE
-            </span>
           </div>
 
           {/* Right Side: Round Hamburger Menu Button */}
@@ -863,7 +886,6 @@ export default function Studio() {
 
             {menuOpen && (
               <div className="absolute right-0 top-[calc(100%+12px)] z-[100] w-[240px] rounded-2xl border border-white/12 bg-[#1b1310] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col gap-3">
-                {/* Profile Header section */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-base select-none bg-gradient-to-tr from-[#c57e44] to-[#ebd8c7]">
                     {coupleInitial}
@@ -877,61 +899,22 @@ export default function Studio() {
                     </span>
                   </div>
                 </div>
-
                 <div className="h-px bg-white/10 w-full my-0.5" />
-
-                {/* Navigation Links */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    navigate("/couple/cart");
-                  }}
-                  className="w-full text-left text-[14px] font-semibold text-white/90 hover:text-white transition py-1 cursor-pointer select-none"
-                >
-                  My Cart
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    navigate("/couple/profile");
-                  }}
-                  className="w-full text-left text-[14px] font-semibold text-white/90 hover:text-white transition py-1 cursor-pointer select-none"
-                >
-                  Profile
-                </button>
-
+                <button type="button" onClick={() => { setMenuOpen(false); navigate("/couple/cart"); }} className="w-full text-left text-[14px] font-semibold text-white/90 hover:text-white transition py-1 cursor-pointer select-none">My Cart</button>
+                <button type="button" onClick={() => { setMenuOpen(false); navigate("/couple/profile"); }} className="w-full text-left text-[14px] font-semibold text-white/90 hover:text-white transition py-1 cursor-pointer select-none">Profile</button>
                 <div className="h-px bg-white/10 w-full my-0.5" />
-
-                {/* Logout Action */}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setMenuOpen(false);
-                    try {
-                      await logout();
-                      navigate("/login");
-                    } catch (err) {
-                      console.error("Logout failed:", err);
-                    }
-                  }}
-                  className="w-full text-left text-[14px] font-semibold text-[#ff7b7b] hover:text-[#ff9b9b] transition py-1 cursor-pointer select-none"
-                >
-                  Logout
-                </button>
+                <button type="button" onClick={async () => { setMenuOpen(false); try { await logout(); navigate("/login"); } catch (err) { console.error("Logout failed:", err); } }} className="w-full text-left text-[14px] font-semibold text-[#ff7b7b] hover:text-[#ff9b9b] transition py-1 cursor-pointer select-none">Logout</button>
               </div>
             )}
           </div>
         </header>
 
         {/* Content Split Layout: Sliding sidebar (left) and 1fr (right panel) */}
-        <div className="flex gap-6 items-stretch flex-1 min-h-0 relative overflow-hidden">
+        <div className="flex gap-5 items-stretch flex-1 min-h-0 relative w-full">
           
           {/* Left Sidebar: Style Filters */}
-          <aside className={`relative transition-all duration-300 ease-in-out flex-shrink-0 ${sidebarOpen ? 'w-[360px] opacity-100' : 'w-0 opacity-0 pointer-events-none p-0 border-0'}`}>
-            <div className="absolute inset-0 bg-[#201915]/40 backdrop-blur-md border border-white/10 rounded-[20px] p-3 flex flex-col overflow-hidden">
-              <div className="pb-2.5 flex items-center justify-between flex-shrink-0 border-b border-white/10 mb-3">
+          <aside ref={sidebarScrollRef} className={`self-start h-fit max-h-[calc(100vh-140px)] overflow-y-auto transition-all duration-300 ease-in-out flex-shrink-0 bg-[#201915]/40 backdrop-blur-md border border-white/10 rounded-[20px] p-3 flex flex-col ${sidebarOpen ? 'w-[340px] opacity-100' : 'w-0 opacity-0 pointer-events-none p-0 border-0'}`} style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(235,216,199,0.25) transparent' }}>
+            <div className="pb-2.5 flex items-center justify-between flex-shrink-0 border-b border-white/10 mb-3">
                 <p className="text-[15px] font-bold uppercase tracking-[0.22em] text-[#ebd8c7]">
                   Style Filters
                 </p>
@@ -1113,54 +1096,157 @@ export default function Studio() {
                 {renderCustomSelect("timing", "Timing", timing, setTiming, TIMING_OPTIONS, "down")}
 
               </div>
-            </div>
           </aside>
 
-          {/* Right Panel: Prompt & Bento Canvas */}
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[20px] p-4 flex flex-col flex-1 h-full min-h-0 overflow-hidden">
+          {/* Right Panel: Journey Workflow & Workspace */}
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
             
-            {/* Top Prompt Row */}
-            <div className="flex flex-col gap-3 lg:flex-row flex-shrink-0">
-              <div className="flex flex-1 items-center gap-3 rounded-[16px] border border-white/10 px-4 py-2 bg-black/10">
-                <span className="text-[#ebd8c7]">
-                  <SparkIcon />
-                </span>
-                <input
-                  value={userPrompt}
-                  onChange={(e) => setUserPrompt(e.target.value)}
-                  placeholder="Describe your Wedding Scene..."
-                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35 font-sans"
-                />
-                <button
-                  type="button"
-                  className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-[#e6c6b2] transition duration-200 flex-shrink-0"
-                  title="Improve Prompt"
-                >
-                  <SparkIcon />
-                </button>
-              </div>
+            {/* Workflow Navigation — Clean, Compact */}
+            <div className="border border-white/10 rounded-[16px] bg-[#160f0d]/40 backdrop-blur-md px-6 py-3 flex-shrink-0 mb-3">
+              <div className="flex items-center justify-center w-full">
+                {JOURNEY_STEPS.map((step, index) => {
+                  const isCompleted = index < currentStepIndex;
+                  const isCurrent = index === currentStepIndex;
+                  const isLocked = index > currentStepIndex;
+                  
+                  return (
+                    <div key={step} className="flex items-center">
+                      {/* Step Node */}
+                      <div className="flex flex-col items-center gap-1 w-[72px]">
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 ${
+                          isCurrent 
+                            ? 'border-[#ebd8c7] text-[#ebd8c7] bg-[#ebd8c7]/10 shadow-[0_0_12px_rgba(235,216,199,0.3)]' 
+                            : isCompleted 
+                              ? 'border-[#ebd8c7] text-[#ebd8c7] bg-[#ebd8c7]/15' 
+                              : 'border-white/15 text-white/30 bg-white/5'
+                        }`}>
+                          {isCompleted ? <CheckIcon /> : isLocked ? <LockIcon /> : <span className="text-xs font-bold">{index + 1}</span>}
+                        </div>
+                        <span className={`text-[8px] font-bold uppercase tracking-[0.12em] text-center whitespace-nowrap transition-all duration-300 ${
+                          isCurrent 
+                            ? 'text-[#ebd8c7]' 
+                            : isCompleted 
+                              ? 'text-white/70' 
+                              : 'text-white/30'
+                        }`}>
+                          {step}
+                        </span>
+                      </div>
 
-              <button
+                      {/* Connector */}
+                      {index < JOURNEY_STEPS.length - 1 && (
+                        <div className="flex items-center justify-center w-6 mb-4">
+                          <svg className={`w-3 h-3 ${index < currentStepIndex ? 'text-[#ebd8c7]' : 'text-white/15'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Action Bar: Section Header + Prompt + Controls */}
+            <div className="flex items-center flex-shrink-0 mb-3 bg-white/5 border border-white/10 rounded-[14px] p-2.5 backdrop-blur-md gap-4">
+              {/* Dynamic Section Header */}
+              <div className="flex items-center pl-2 flex-shrink-0">
+                <h2 className="font-['Cormorant_Garamond'] text-[18px] md:text-[22px] font-semibold text-[#ebd8c7] tracking-wide leading-tight">
+                  {JOURNEY_STEPS[currentStepIndex]} Design
+                </h2>
+              </div>
+              {/* Divider */}
+              <div className="w-px h-8 bg-white/10 flex-shrink-0" />
+              {/* Prompt Input */}
+              <div className="flex-1 flex items-center bg-black/40 border border-white/10 rounded-[10px] px-3 py-2 focus-within:border-white/25 transition-all duration-300">
+                <svg className="w-4 h-4 text-white/30 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <input
+                  type="text"
+                  value={promptInput}
+                  onChange={(e) => setPromptInput(e.target.value)}
+                  placeholder="Describe your vision for this space..."
+                  className="w-full bg-transparent border-none text-[13px] text-white focus:outline-none placeholder:text-white/25"
+                />
+              </div>
+              {/* Edit Button */}
+              <button 
                 type="button"
-                onClick={handleGenerate}
-                disabled={generating}
-                className="inline-flex items-center justify-center gap-2 rounded-[16px] loverai-btn-accent px-6 py-2 hover:bg-[#ebd0be] transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-[#3D1B2D] font-semibold"
+                className="hidden md:flex items-center justify-center w-9 h-9 rounded-[10px] border border-white/12 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition cursor-pointer flex-shrink-0"
+                title="Edit Prompt"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                </svg>
+              </button>
+              {/* Regenerate Button */}
+              <button 
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-2 h-9 rounded-[10px] border border-white/12 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex-shrink-0"
               >
                 <SparkIcon />
-                Generate
+                Regenerate
               </button>
             </div>
 
-            {error && (
-              <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-xs text-red-200 mt-2 flex-shrink-0">
-                {error}
+            {/* Generation Placeholder Grid — Dominant flex stretch */}
+            <div className="flex-1 min-h-0 flex flex-col gap-3 w-full">
+              {/* Top Row */}
+              <div className="flex-1 min-h-0 flex gap-3 w-full">
+                {[1, 2].map(num => (
+                  <div key={num} className="flex-1 h-full rounded-[18px] border border-white/12 bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-4 hover:border-[#ebd8c7]/30 hover:bg-white/[0.07] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-300 cursor-pointer group relative overflow-hidden">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/15 bg-black/25 flex items-center justify-center text-white/40 mb-3 group-hover:scale-110 group-hover:text-[#ebd8c7] group-hover:border-[#ebd8c7]/40 transition-all duration-500">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                    </div>
+                    <span className="text-[#ebd8c7] font-bold text-sm md:text-base tracking-[0.1em] uppercase mb-0.5 drop-shadow-md">Concept {num}</span>
+                    <span className="text-white/40 text-[10px] font-semibold tracking-wide">Ready for generation</span>
+                  </div>
+                ))}
               </div>
-            )}
+              {/* Bottom Row */}
+              <div className="flex-1 min-h-0 flex gap-3 w-full">
+                {[3, 4].map(num => (
+                  <div key={num} className="flex-1 h-full rounded-[18px] border border-white/12 bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-4 hover:border-[#ebd8c7]/30 hover:bg-white/[0.07] hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-300 cursor-pointer group relative overflow-hidden">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/15 bg-black/25 flex items-center justify-center text-white/40 mb-3 group-hover:scale-110 group-hover:text-[#ebd8c7] group-hover:border-[#ebd8c7]/40 transition-all duration-500">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                    </div>
+                    <span className="text-[#ebd8c7] font-bold text-sm md:text-base tracking-[0.1em] uppercase mb-0.5 drop-shadow-md">Concept {num}</span>
+                    <span className="text-white/40 text-[10px] font-semibold tracking-wide">Ready for generation</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            {/* Bento Grid Canvas */}
-            <section className="rounded-[14px] border border-white/5 bg-white/5 p-4 flex flex-col flex-1 mt-4 min-h-0 overflow-hidden">
-              {renderCanvas()}
-            </section>
+            {/* Footer */}
+            <div className="flex items-center justify-between flex-shrink-0 pt-3">
+              <div className="flex items-center gap-2 text-white/40 text-[10px] max-w-[55%] leading-relaxed">
+                <svg className="w-4 h-4 flex-shrink-0 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <p>These designs are generated based on your preferences. Your selected concepts will be used as references for upcoming sections.</p>
+              </div>
+              <button 
+                type="button"
+                disabled={currentStepIndex === JOURNEY_STEPS.length - 1}
+                onClick={() => setCurrentStepIndex(c => Math.min(JOURNEY_STEPS.length - 1, c + 1))}
+                className="px-6 py-2.5 rounded-[12px] bg-gradient-to-r from-[#ebd8c7] to-[#c57e44] text-[#1e1815] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-extrabold uppercase tracking-widest transition-all shadow-[0_8px_24px_rgba(235,216,199,0.25)] flex items-center gap-2 flex-shrink-0"
+              >
+                SAVE & CONTINUE 
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
         </div>
