@@ -1282,7 +1282,7 @@ export default function Studio() {
               {/* Regenerate Button */}
               <button 
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-2 h-9 rounded-[10px] border border-white/12 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 h-9 rounded-lg bg-[#f2dad0] text-[#251f1b] font-semibold text-[11px] uppercase tracking-wider transition cursor-pointer flex-shrink-0"
               >
                 <SparkIcon />
                 Regenerate
@@ -1301,25 +1301,25 @@ export default function Studio() {
                     <div 
                       key={concept.id} 
                       onClick={() => toggleSelection(concept)}
-                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-2 ring-inset ring-[#ebd8c7] shadow-[0_0_25px_rgba(235,216,199,0.25)] hover:shadow-[0_0_35px_rgba(235,216,199,0.4)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#ebd8c7]/40 hover:bg-white/[0.07]'}`}
+                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
                     >
                       {/* Background Image */}
                       <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       
                       {/* Selection Overlay */}
                       {isSelected && (
-                        <div className="absolute inset-0 bg-[#ebd8c7]/5 mix-blend-screen z-10 pointer-events-none" />
+                        <div className="absolute inset-0 bg-[#f2dad0]/5 mix-blend-screen z-10 pointer-events-none" />
                       )}
                       
-                      {/* Top-Left: Selection Badge */}
-                      {isSelected && (
-                        <div className="absolute top-3 left-3 bg-[#ebd8c7] rounded-full w-5 h-5 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)] z-20">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e1815" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Top-Left: Selection Indicator */}
+                      <div className={`absolute top-3 left-3 w-5 h-5 rounded-full flex items-center justify-center z-20 transition-all duration-300 ${isSelected ? 'bg-[#f2dad0]' : 'bg-transparent border border-white/40 group-hover:border-white/70'}`}>
+                        {isSelected && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#251f1b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       {/* Top-Right: Favorite Icon */}
                       <button 
@@ -1330,24 +1330,11 @@ export default function Studio() {
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                       </button>
-                      
-                      {/* Center: Expand/Preview */}
-                      <button 
-                        onClick={(e) => handlePreview(e, concept.image)}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/30 bg-black/40 backdrop-blur-md flex items-center justify-center text-white/70 mb-2 group-hover:scale-110 group-hover:text-white group-hover:border-white/50 transition-all duration-500 z-20 relative"
-                      >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="15 3 21 3 21 9" />
-                          <polyline points="9 21 3 21 3 15" />
-                          <line x1="21" y1="3" x2="14" y2="10" />
-                          <line x1="3" y1="21" x2="10" y2="14" />
-                        </svg>
-                      </button>
 
                       {/* Bottom Text */}
-                      <div className="absolute bottom-4 left-4 right-4 text-left z-20">
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-4 text-left z-20">
                          <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
-                         <span className="text-white/70 text-[10px] md:text-xs font-semibold tracking-wide block truncate mt-0.5">{concept.description}</span>
+                         <span className="text-white/80 text-[10px] md:text-xs font-medium tracking-wide block truncate mt-0.5">{concept.description}</span>
                       </div>
                     </div>
                   );
@@ -1363,24 +1350,24 @@ export default function Studio() {
                     <div 
                       key={concept.id} 
                       onClick={() => toggleSelection(concept)}
-                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-2 ring-inset ring-[#ebd8c7] shadow-[0_0_25px_rgba(235,216,199,0.25)] hover:shadow-[0_0_35px_rgba(235,216,199,0.4)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#ebd8c7]/40 hover:bg-white/[0.07]'}`}
+                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
                     >
                       <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       
                       {/* Selection Overlay */}
                       {isSelected && (
-                        <div className="absolute inset-0 bg-[#ebd8c7]/5 mix-blend-screen z-10 pointer-events-none" />
+                        <div className="absolute inset-0 bg-[#f2dad0]/5 mix-blend-screen z-10 pointer-events-none" />
                       )}
                       
-                      {/* Top-Left: Selection Badge */}
-                      {isSelected && (
-                        <div className="absolute top-3 left-3 bg-[#ebd8c7] rounded-full w-5 h-5 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)] z-20">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e1815" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Top-Left: Selection Indicator */}
+                      <div className={`absolute top-3 left-3 w-5 h-5 rounded-full flex items-center justify-center z-20 transition-all duration-300 ${isSelected ? 'bg-[#f2dad0]' : 'bg-transparent border border-white/40 group-hover:border-white/70'}`}>
+                        {isSelected && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#251f1b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       <button 
                         onClick={(e) => toggleFavorite(e, concept.id)}
@@ -1390,22 +1377,11 @@ export default function Studio() {
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                       </button>
-                      
-                      <button 
-                        onClick={(e) => handlePreview(e, concept.image)}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/30 bg-black/40 backdrop-blur-md flex items-center justify-center text-white/70 mb-2 group-hover:scale-110 group-hover:text-white group-hover:border-white/50 transition-all duration-500 z-20 relative"
-                      >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="15 3 21 3 21 9" />
-                          <polyline points="9 21 3 21 3 15" />
-                          <line x1="21" y1="3" x2="14" y2="10" />
-                          <line x1="3" y1="21" x2="10" y2="14" />
-                        </svg>
-                      </button>
 
-                      <div className="absolute bottom-4 left-4 right-4 text-left z-20">
+                      {/* Bottom Text */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-4 text-left z-20">
                          <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
-                         <span className="text-white/70 text-[10px] md:text-xs font-semibold tracking-wide block truncate mt-0.5">{concept.description}</span>
+                         <span className="text-white/80 text-[10px] md:text-xs font-medium tracking-wide block truncate mt-0.5">{concept.description}</span>
                       </div>
                     </div>
                   );
@@ -1430,7 +1406,7 @@ export default function Studio() {
                   type="button"
                   disabled={!hasSelection}
                   onClick={handleSaveAndContinue}
-                  className={`px-6 py-2.5 rounded-[12px] bg-gradient-to-r from-[#ebd8c7] to-[#c57e44] text-[#1e1815] transition-all shadow-[0_8px_24px_rgba(235,216,199,0.25)] flex items-center gap-2 flex-shrink-0 text-xs font-extrabold uppercase tracking-widest ${!hasSelection ? 'opacity-40 grayscale cursor-not-allowed' : 'hover:opacity-90'}`}
+                  className={`px-6 py-2.5 rounded-lg bg-[#f2dad0] text-[#251f1b] transition-all flex items-center gap-2 flex-shrink-0 text-[11px] font-semibold uppercase tracking-widest ${!hasSelection ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 >
                   SAVE & CONTINUE 
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
