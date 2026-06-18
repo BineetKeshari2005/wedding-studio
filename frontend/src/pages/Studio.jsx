@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { coupleMoodboardAPI } from "../lib/api";
 const saveThemeMoodboard = (data) => { console.log("Saved Theme Moodboard:", data); return "default-theme"; };
 import { useAuth } from "@/contexts/AuthContext";
+import { useStudio, JOURNEY_STEPS } from "../contexts/StudioContext";
 
 const FUNCTION_OPTIONS = [
   "Haldi",
@@ -203,14 +204,7 @@ const UploadIcon = () => (
   </svg>
 );
 
-const JOURNEY_STEPS = [
-  "Entry",
-  "Lounge",
-  "Dining",
-  "Bar",
-  "Stage",
-  "Photo Booth"
-];
+
 
 const MOCK_CONCEPTS = JOURNEY_STEPS.reduce((acc, step) => {
   acc[step] = [
@@ -292,12 +286,16 @@ export default function Studio() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [promptInput, setPromptInput] = useState("");
   
-  // Phase 2 State
-  const [selectedConcepts, setSelectedConcepts] = useState({
-    Entry: [], Lounge: [], Dining: [], Bar: [], Stage: [], "Photo Booth": []
-  });
-  const [completedSections, setCompletedSections] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+  // Phase 2 State - now pulled from Context
+  const {
+    selectedConcepts,
+    completedSections,
+    favorites,
+    toggleSelection,
+    toggleFavorite,
+    completeSection,
+  } = useStudio();
+  
   const [previewImage, setPreviewImage] = useState(null);
 
   const currentStepName = JOURNEY_STEPS[currentStepIndex];
@@ -305,29 +303,11 @@ export default function Studio() {
 
   const handleSaveAndContinue = () => {
     if (!completedSections.includes(currentStepName)) {
-      setCompletedSections(prev => [...prev, currentStepName]);
+      completeSection(currentStepName);
     }
     if (currentStepIndex < JOURNEY_STEPS.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     }
-  };
-
-  const toggleSelection = (concept) => {
-    setSelectedConcepts(prev => {
-      const currentSelections = prev[currentStepName];
-      const isAlreadySelected = currentSelections.some(c => c.id === concept.id);
-      const newSelections = isAlreadySelected 
-        ? currentSelections.filter(c => c.id !== concept.id)
-        : [...currentSelections, concept];
-      return { ...prev, [currentStepName]: newSelections };
-    });
-  };
-
-  const toggleFavorite = (e, conceptId) => {
-    e.stopPropagation();
-    setFavorites(prev => 
-      prev.includes(conceptId) ? prev.filter(id => id !== conceptId) : [...prev, conceptId]
-    );
   };
 
   const handlePreview = (e, imageUrl) => {
@@ -537,8 +517,7 @@ export default function Studio() {
   };
 
   const openThemeBoard = () => {
-    const boardTheme = savedTheme || getThemeFromFunction(functionType);
-    navigate(`/couple/moodboard/${boardTheme}`);
+    navigate(`/moodboards`);
   };
 
   const planAnotherFunction = () => {
@@ -937,7 +916,7 @@ export default function Studio() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/couple/moodboard/wedding")}
+              onClick={() => navigate("/moodboards")}
               className="rounded-full border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/90 transition duration-200"
             >
               Moodboards
@@ -1300,7 +1279,7 @@ export default function Studio() {
                   return (
                     <div 
                       key={concept.id} 
-                      onClick={() => toggleSelection(concept)}
+                      onClick={() => toggleSelection(currentStepName, concept)}
                       className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
                     >
                       {/* Background Image */}
@@ -1349,7 +1328,7 @@ export default function Studio() {
                   return (
                     <div 
                       key={concept.id} 
-                      onClick={() => toggleSelection(concept)}
+                      onClick={() => toggleSelection(currentStepName, concept)}
                       className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
                     >
                       <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />

@@ -12,7 +12,9 @@ import Studio from "./pages/Studio";
 import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
 import Templates from "./pages/Templates";
+import Moodboards from "./pages/Moodboards";
 import NotFound from "./pages/NotFound";
+import { StudioProvider } from "./contexts/StudioContext";
 
 const queryClient = new QueryClient();
 
@@ -23,17 +25,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/studio" element={<Studio />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/templates" element={<Templates />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <StudioProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/studio" element={<Studio />} />
+              <Route path="/moodboards" element={<Moodboards />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/templates" element={<Templates />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </StudioProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
