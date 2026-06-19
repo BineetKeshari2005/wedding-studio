@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String         @id @default(uuid())
-  email     String         @unique
-  password  String
-  name      String?
-  avatarUrl String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  projects  Project[]
-  tokens    RefreshToken[]
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  name           String?
+  avatarUrl      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  projects       Project[]
+  studioProjects StudioProject[]
+  tokens         RefreshToken[]
 }
 
 model Project {
@@ -29,6 +30,40 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudioProject {
+  id                 String         @id @default(uuid())
+  userId             String
+  name               String
+  status             String         @default("draft") // draft | completed | archived
+  weddingPreferences Json?          // { venue, budget, season, theme, eventFlow, timing, functions, guestCount, colorPalette }
+  selectedReferences Json?          // reference image data per section
+  completedSections  Json?          // ["Entry", "Lounge", ...]
+  currentSection     String         @default("Entry")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedConcepts      SavedConcept[]
+
+  @@index([userId])
+}
+
+model SavedConcept {
+  id                  String        @id @default(uuid())
+  projectId           String
+  section             String        // Entry | Lounge | Dining | Bar | Stage | Photo Booth
+  imageUrl            String
+  prompt              String?
+  generationId        String?
+  selectedFilters     Json?         // { style, atmosphere, timing, ... }
+  referenceImagesUsed Json?         // images from prior sections used for consistency
+  isFavorite          Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  project             StudioProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectId, section])
 }
 
 model RefreshToken {

@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { errorHandler } from './middleware/error.middleware';
 import authRoutes from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
+import studioRoutes from './routes/studio.routes';
 
 import { setupSwagger } from './config/swagger';
 
@@ -36,6 +37,7 @@ setupSwagger(app);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/studio', studioRoutes);
 
 // Error Handler
 app.use(errorHandler);

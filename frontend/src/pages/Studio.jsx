@@ -259,16 +259,34 @@ export default function Studio() {
   const [decorImage, setDecorImage] = useState(null);
   const [decorPreview, setDecorPreview] = useState(null);
 
-  const [style, setStyle] = useState("Modern");
-  const [functionType, setFunctionType] = useState("Haldi");
-  const [atmosphere, setAtmosphere] = useState("Warm & Festive");
-  const [timing, setTiming] = useState("Morning (Day light)");
-  const [userPrompt, setUserPrompt] = useState("");
-  const [budget, setBudget] = useState(11);
-  const [guestCount, setGuestCount] = useState(0);
-  const [planningType, setPlanningType] = useState("Decor / Planning / Venue");
-  const [venueType, setVenueType] = useState("Banquet");
-  const [theme, setTheme] = useState("Carnival");
+  const {
+    selectedConcepts,
+    completedSections,
+    favorites,
+    currentSection,
+    setCurrentSection,
+    preferences,
+    setPreferences,
+    toggleSelection,
+    toggleFavorite,
+    completeSection,
+  } = useStudio();
+
+  const [style, setStyle] = useState(preferences?.style || "Modern");
+  const [functionType, setFunctionType] = useState(preferences?.functionType || "Haldi");
+  const [atmosphere, setAtmosphere] = useState(preferences?.atmosphere || "Warm & Festive");
+  const [timing, setTiming] = useState(preferences?.timing || "Morning (Day light)");
+  const [userPrompt, setUserPrompt] = useState(preferences?.userPrompt || "");
+  const [budget, setBudget] = useState(preferences?.budget || 11);
+  const [guestCount, setGuestCount] = useState(preferences?.guestCount || 0);
+  const [planningType, setPlanningType] = useState(preferences?.planningType || "Decor / Planning / Venue");
+  const [venueType, setVenueType] = useState(preferences?.venueType || "Banquet");
+  const [theme, setTheme] = useState(preferences?.theme || "Carnival");
+
+  // Sync back to context when these change
+  useEffect(() => {
+    setPreferences({ style, functionType, atmosphere, timing, userPrompt, budget, guestCount, planningType, venueType, theme });
+  }, [style, functionType, atmosphere, timing, userPrompt, budget, guestCount, planningType, venueType, theme, setPreferences]);
 
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState("");
@@ -283,30 +301,33 @@ export default function Studio() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
   const [promptInput, setPromptInput] = useState("");
   
-  // Phase 2 State - now pulled from Context
-  const {
-    selectedConcepts,
-    completedSections,
-    favorites,
-    toggleSelection,
-    toggleFavorite,
-    completeSection,
-  } = useStudio();
+
   
   const [previewImage, setPreviewImage] = useState(null);
 
+  const currentStepIndex = Math.max(0, JOURNEY_STEPS.indexOf(currentSection));
   const currentStepName = JOURNEY_STEPS[currentStepIndex];
   const hasSelection = selectedConcepts[currentStepName]?.length > 0;
+
+  const maxCompletedIndex = completedSections.length === 0 
+    ? -1 
+    : Math.max(...completedSections.map(s => JOURNEY_STEPS.indexOf(s)));
 
   const handleSaveAndContinue = () => {
     if (!completedSections.includes(currentStepName)) {
       completeSection(currentStepName);
     }
+    
     if (currentStepIndex < JOURNEY_STEPS.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1);
+      const effectiveMaxCompletedIndex = Math.max(maxCompletedIndex, currentStepIndex);
+      const targetIndex = Math.max(currentStepIndex + 1, effectiveMaxCompletedIndex + 1);
+      
+      if (targetIndex < JOURNEY_STEPS.length) {
+        setCurrentSection(JOURNEY_STEPS[targetIndex]);
+      }
     }
   };
 
@@ -634,7 +655,12 @@ export default function Studio() {
         <div className="relative w-full">
           <button
             type="button"
-            onClick={() => setActiveModalDropdown(isOpen ? null : id)}
+            onClick={() => {
+              setActiveModalDropdown(isOpen ? null : id);
+              if (stepName) {
+                setCurrentSection(stepName);
+              }
+            }}
             className="w-full flex items-center justify-between rounded-full border border-white/10 bg-[#251e1b]/60 hover:bg-black/40 hover:border-white/20 text-white font-medium px-4 py-2 text-xs outline-none transition duration-150 text-left cursor-pointer"
           >
             <div className="flex items-center gap-2 truncate">
@@ -1179,14 +1205,14 @@ export default function Studio() {
                 {JOURNEY_STEPS.map((step, index) => {
                   const isCompleted = completedSections.includes(step);
                   const isCurrent = index === currentStepIndex;
-                  const isLocked = index > completedSections.length;
+                  const isLocked = index > maxCompletedIndex + 1;
                   
                   return (
                     <div 
                       key={step} 
                       className={`flex items-center ${!isLocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
                       onClick={() => {
-                        if (!isLocked) setCurrentStepIndex(index);
+                        if (!isLocked) setCurrentSection(JOURNEY_STEPS[index]);
                       }}
                     >
                       {/* Step Node */}
