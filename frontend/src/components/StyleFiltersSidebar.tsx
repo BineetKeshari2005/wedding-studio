@@ -24,6 +24,25 @@ const TIMING_OPTIONS = [
   "Night (Under Stars)",
 ];
 
+const WEDDING_STYLE_OPTIONS = [
+  "Modern Luxury",
+  "Royal Traditional",
+  "Boho",
+  "Minimalist",
+  "Contemporary",
+  "Garden Elegant"
+];
+
+const COLOR_PALETTE_OPTIONS = [
+  "Ivory & Gold",
+  "Blush Pink",
+  "White & Green",
+  "Champagne",
+  "Royal Red",
+  "Pastel Garden",
+  "Terracotta & Beige"
+];
+
 const formatBudgetLabel = (budget: number) => {
   if (budget >= 100) return "1 Cr";
   return `${budget} L`;
@@ -83,6 +102,8 @@ export default function StyleFiltersSidebar() {
   const [eventFlow, setEventFlow] = useState<string>("Decor / Planning / Venue");
   const [venueType, setVenueType] = useState<string>("Banquet");
   const [timing, setTiming] = useState<string>("Sunset (Golden Hour)");
+  const [weddingStyle, setWeddingStyle] = useState<string>("Modern Luxury");
+  const [colorPalette, setColorPalette] = useState<string>("Ivory & Gold");
   
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -279,6 +300,24 @@ export default function StyleFiltersSidebar() {
           eventFlow,
           setEventFlow,
           EVENT_FLOW_OPTIONS
+        )}
+
+        {/* Wedding Style */}
+        {renderCustomSelect(
+          "weddingStyle",
+          "Wedding Style",
+          weddingStyle,
+          setWeddingStyle,
+          WEDDING_STYLE_OPTIONS
+        )}
+
+        {/* Color Palette */}
+        {renderCustomSelect(
+          "colorPalette",
+          "Color Palette",
+          colorPalette,
+          setColorPalette,
+          COLOR_PALETTE_OPTIONS
         )}
 
         {/* Venue Dropdown */}

@@ -35,6 +35,26 @@ const PLANNING_OPTIONS = ["Decor / Planning / Venue", "Fashion / Photography", "
 const VENUE_OPTIONS = ["Banquet", "Open Lawn"];
 const THEME_OPTIONS = ["Carnival", "Royal", "Pastel", "Garden", "Minimal Luxe"];
 
+const WEDDING_STYLE_OPTIONS = [
+  "Modern Luxury",
+  "Royal Traditional",
+  "Boho",
+  "Minimalist",
+  "Contemporary",
+  "Garden Elegant"
+];
+
+const COLOR_PALETTE_OPTIONS = [
+  "Ivory & Gold",
+  "Blush Pink",
+  "White & Green",
+  "Champagne",
+  "Royal Red",
+  "Pastel Garden",
+  "Terracotta & Beige"
+];
+
+
 const TITLE_MAP = {
   Haldi: "Golden Dreams of Haldi",
   Mehndi: "Henna Garden Reverie",
@@ -236,6 +256,28 @@ const MOCK_CONCEPTS = JOURNEY_STEPS.reduce((acc, step) => {
   return acc;
 }, {});
 
+// Demo wedding image map — maps each journey section to its 4 demo images
+const DEMO_SECTION_MAP = {
+  Entry: { folder: "entry", prefix: "e", labels: ["Grand Entry Arch", "Floral Welcome Passage", "Ivory Aisle Canopy", "Gold Pillar Statement"] },
+  Lounge: { folder: "lounge", prefix: "l", labels: ["Velvet Seating Nook", "Champagne Lounge", "Gilded Mirror Lounge", "Intimate Sofa Circle"] },
+  Dining: { folder: "dining", prefix: "d", labels: ["Royal Table Setting", "Crystal Centerpiece Row", "Banquet Hall Layout", "Candlelit Long Table"] },
+  Bar: { folder: "bar", prefix: "b", labels: ["Gold Bar Counter", "Cocktail Station", "Ivory Bar Backdrop", "Floating Shelf Display"] },
+  Stage: { folder: "stage", prefix: "s", labels: ["Grand Stage Mandap", "Floral Stage Frame", "LED Panel Stage", "Classic Drape Stage"] },
+  "Photo Booth": { folder: "photobooth", prefix: "p", labels: ["Flower Wall Booth", "Neon Sign Setup", "Mirror Frame Booth", "Garden Prop Corner"] },
+};
+
+const DEMO_CONCEPTS = JOURNEY_STEPS.reduce((acc, step) => {
+  const info = DEMO_SECTION_MAP[step];
+  if (!info) return acc;
+  acc[step] = [1, 2, 3, 4].map((n) => ({
+    id: `demo_${step.toLowerCase().replace(" ", "_")}_${n}`,
+    title: info.labels[n - 1],
+    description: `Modern Luxury • Ivory & Gold`,
+    image: `/demo-wedding/${info.folder}/${info.prefix}${n}.png`,
+  }));
+  return acc;
+}, {});
+
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12" />
@@ -282,11 +324,13 @@ export default function Studio() {
   const [planningType, setPlanningType] = useState(preferences?.planningType || "Decor / Planning / Venue");
   const [venueType, setVenueType] = useState(preferences?.venueType || "Banquet");
   const [theme, setTheme] = useState(preferences?.theme || "Carnival");
+  const [weddingStyle, setWeddingStyle] = useState(preferences?.weddingStyle || "Modern Luxury");
+  const [colorPalette, setColorPalette] = useState(preferences?.colorPalette || "Ivory & Gold");
 
   // Sync back to context when these change
   useEffect(() => {
-    setPreferences({ style, functionType, atmosphere, timing, userPrompt, budget, guestCount, planningType, venueType, theme });
-  }, [style, functionType, atmosphere, timing, userPrompt, budget, guestCount, planningType, venueType, theme, setPreferences]);
+    setPreferences({ style, functionType, atmosphere, timing, userPrompt, budget, guestCount, planningType, venueType, theme, weddingStyle, colorPalette });
+  }, [style, functionType, atmosphere, timing, userPrompt, budget, guestCount, planningType, venueType, theme, weddingStyle, colorPalette, setPreferences]);
 
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState("");
@@ -303,6 +347,8 @@ export default function Studio() {
 
 
   const [promptInput, setPromptInput] = useState("");
+  const [demoGenerated, setDemoGenerated] = useState({});
+  const [demoMessage, setDemoMessage] = useState("");
   
 
   
@@ -328,6 +374,23 @@ export default function Studio() {
       if (targetIndex < JOURNEY_STEPS.length) {
         setCurrentSection(JOURNEY_STEPS[targetIndex]);
       }
+    }
+  };
+
+  // Demo generation: check filters and load demo concepts for current section
+  const handleDemoGenerate = () => {
+    setDemoMessage("");
+    const filtersMatch =
+      style === "Modern" &&
+      weddingStyle === "Modern Luxury" &&
+      colorPalette === "Ivory & Gold" &&
+      venueType === "Banquet";
+
+    if (filtersMatch) {
+      setDemoGenerated((prev) => ({ ...prev, [currentStepName]: true }));
+    } else {
+      setDemoMessage("Demo concepts are currently available for Modern Luxury • Ivory & Gold • Banquet.");
+      setDemoGenerated((prev) => ({ ...prev, [currentStepName]: false }));
     }
   };
 
@@ -898,7 +961,7 @@ export default function Studio() {
   };
 
   return (
-    <main className="loverai-wedding-shell min-h-screen text-white px-3 md:px-6 flex flex-col items-center justify-center overflow-visible py-4">
+    <main className="loverai-wedding-shell h-screen text-white px-3 md:px-6 flex flex-col items-center justify-center overflow-hidden py-4">
       <div
         className="loverai-wedding-bg"
         style={{ backgroundImage: 'url("/images/signup.png")' }}
@@ -926,7 +989,7 @@ export default function Studio() {
       )}
 
       {/* Outer Container with Premium Glassmorphism */}
-      <div className="relative z-10 mx-auto max-w-[1380px] w-full h-[calc(100vh-32px)] max-h-[960px] bg-white/5 backdrop-blur-2xl border border-white/15 rounded-[24px] shadow-[0_30px_70px_rgba(0,0,0,0.45)] p-4 md:p-5 lg:p-6 flex flex-col">
+      <div className="relative z-10 mx-auto max-w-[1380px] w-full h-[calc(100vh-32px)] max-h-[960px] min-h-0 overflow-hidden bg-white/5 backdrop-blur-2xl border border-white/15 rounded-[24px] shadow-[0_30px_70px_rgba(0,0,0,0.45)] p-4 md:p-5 lg:p-6 flex flex-col">
         
         {/* Compact Header Section */}
         <header className="mb-3 relative flex items-center justify-between w-full flex-shrink-0">
@@ -1008,10 +1071,10 @@ export default function Studio() {
         </header>
 
         {/* Content Split Layout: Sliding sidebar (left) and 1fr (right panel) */}
-        <div className="flex gap-5 items-stretch flex-1 min-h-0 relative w-full">
+        <div className="flex gap-5 items-stretch flex-1 min-h-0 h-full overflow-hidden relative w-full">
           
           {/* Left Sidebar: Style Filters */}
-          <aside ref={sidebarScrollRef} className={`self-start h-fit max-h-[calc(100vh-140px)] overflow-y-auto transition-all duration-300 ease-in-out flex-shrink-0 bg-[#201915]/40 backdrop-blur-md border border-white/10 rounded-[20px] p-3 flex flex-col ${sidebarOpen ? 'w-[340px] opacity-100' : 'w-0 opacity-0 pointer-events-none p-0 border-0'}`} style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(235,216,199,0.25) transparent' }}>
+          <aside className={`self-stretch h-full min-h-0 overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 bg-[#201915]/40 backdrop-blur-md border border-white/10 rounded-[20px] p-3 flex flex-col ${sidebarOpen ? 'w-[340px] opacity-100' : 'w-0 opacity-0 pointer-events-none p-0 border-0'}`}>
             <div className="pb-2.5 flex items-center justify-between flex-shrink-0 border-b border-white/10 mb-3">
                 <p className="text-[15px] font-bold uppercase tracking-[0.22em] text-[#ebd8c7]">
                   Style Filters
@@ -1184,6 +1247,12 @@ export default function Studio() {
                   </div>
                 </div>
 
+                {/* Wedding Style */}
+                {renderCustomSelect("weddingStyle", "Wedding Style", weddingStyle, setWeddingStyle, WEDDING_STYLE_OPTIONS, "down")}
+
+                {/* Color Palette */}
+                {renderCustomSelect("colorPalette", "Color Palette", colorPalette, setColorPalette, COLOR_PALETTE_OPTIONS, "down")}
+
                 {/* 6. Event Flow */}
                 {renderCustomSelect("eventFlow", "Event Flow", planningType, setPlanningType, PLANNING_OPTIONS, "down")}
 
@@ -1197,7 +1266,7 @@ export default function Studio() {
           </aside>
 
           {/* Right Panel: Journey Workflow & Workspace */}
-          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
             
             {/* Workflow Navigation — Clean, Compact */}
             <div className="border border-white/10 rounded-[16px] bg-[#160f0d]/40 backdrop-blur-md px-6 py-3 flex-shrink-0 mb-3">
@@ -1284,114 +1353,165 @@ export default function Studio() {
                   <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                 </svg>
               </button>
-              {/* Regenerate Button */}
+              {/* Generate / Regenerate Button */}
               <button 
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-2 h-9 rounded-lg bg-[#f2dad0] text-[#251f1b] font-semibold text-[11px] uppercase tracking-wider transition cursor-pointer flex-shrink-0"
+                onClick={handleDemoGenerate}
+                className="flex items-center gap-1.5 px-3 py-2 h-9 rounded-lg bg-[#f2dad0] text-[#251f1b] font-semibold text-[11px] uppercase tracking-wider transition cursor-pointer flex-shrink-0 hover:brightness-95"
               >
                 <SparkIcon />
-                Regenerate
+                {demoGenerated[currentStepName] ? "Regenerate" : "Generate"}
               </button>
             </div>
 
             {/* Generation Placeholder Grid — Dominant flex stretch */}
             <div className="flex-1 min-h-0 flex flex-col gap-3 w-full">
-              {/* Top Row */}
-              <div className="flex-1 min-h-0 flex gap-3 w-full">
-                {MOCK_CONCEPTS[currentStepName]?.slice(0, 2).map((concept) => {
-                  const isSelected = selectedConcepts[currentStepName].some(c => c.id === concept.id);
-                  const isFavorited = favorites.includes(concept.id);
-                  
-                  return (
-                    <div 
-                      key={concept.id} 
-                      onClick={() => toggleSelection(currentStepName, concept)}
-                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
-                    >
-                      {/* Background Image */}
-                      <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+              {/* Demo helper message when filters don't match */}
+              {demoMessage && !demoGenerated[currentStepName] && (
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-[12px] flex-shrink-0">
+                  <svg className="w-4 h-4 text-[#ebd8c7] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  <span>{demoMessage}</span>
+                </div>
+              )}
+
+              {/* Show concepts only after Generate is clicked and filters match */}
+              {demoGenerated[currentStepName] ? (
+                <>
+                  {/* Top Row */}
+                  <div className="flex-1 min-h-0 flex gap-3 w-full">
+                    {DEMO_CONCEPTS[currentStepName]?.slice(0, 2).map((concept) => {
+                      const isSelected = selectedConcepts[currentStepName].some(c => c.id === concept.id);
+                      const isFavorited = favorites.includes(concept.id);
                       
-                      {/* Selection Overlay */}
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-[#f2dad0]/5 mix-blend-screen z-10 pointer-events-none" />
-                      )}
+                      return (
+                        <div 
+                          key={concept.id} 
+                          onClick={() => toggleSelection(currentStepName, concept)}
+                          className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
+                        >
+                          {/* Background Image */}
+                          <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          
+                          {/* Selection Overlay */}
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-[#f2dad0]/5 mix-blend-screen z-10 pointer-events-none" />
+                          )}
+                          
+                          {/* Top-Left: Selection Indicator */}
+                          <div className={`absolute top-3 left-3 w-5 h-5 rounded-full flex items-center justify-center z-20 transition-all duration-300 ${isSelected ? 'bg-[#f2dad0]' : 'bg-transparent border border-white/40 group-hover:border-white/70'}`}>
+                            {isSelected && (
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#251f1b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+
+                          {/* Top-Right: Favorite Icon */}
+                          <button 
+                            onClick={(e) => toggleFavorite(e, concept.id)}
+                            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition z-20"
+                          >
+                            <svg className={`w-4 h-4 ${isFavorited ? 'fill-[#ff4d4d] text-[#ff4d4d]' : 'text-white'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                          </button>
+
+                          {/* Bottom Text */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-4 text-left z-20">
+                             <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
+                             <span className="text-white/80 text-[10px] md:text-xs font-medium tracking-wide block truncate mt-0.5">{concept.description}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Bottom Row */}
+                  <div className="flex-1 min-h-0 flex gap-3 w-full">
+                    {DEMO_CONCEPTS[currentStepName]?.slice(2, 4).map((concept) => {
+                      const isSelected = selectedConcepts[currentStepName].some(c => c.id === concept.id);
+                      const isFavorited = favorites.includes(concept.id);
                       
-                      {/* Top-Left: Selection Indicator */}
-                      <div className={`absolute top-3 left-3 w-5 h-5 rounded-full flex items-center justify-center z-20 transition-all duration-300 ${isSelected ? 'bg-[#f2dad0]' : 'bg-transparent border border-white/40 group-hover:border-white/70'}`}>
-                        {isSelected && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#251f1b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
+                      return (
+                        <div 
+                          key={concept.id} 
+                          onClick={() => toggleSelection(currentStepName, concept)}
+                          className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
+                        >
+                          <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          
+                          {/* Selection Overlay */}
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-[#f2dad0]/5 mix-blend-screen z-10 pointer-events-none" />
+                          )}
+                          
+                          {/* Top-Left: Selection Indicator */}
+                          <div className={`absolute top-3 left-3 w-5 h-5 rounded-full flex items-center justify-center z-20 transition-all duration-300 ${isSelected ? 'bg-[#f2dad0]' : 'bg-transparent border border-white/40 group-hover:border-white/70'}`}>
+                            {isSelected && (
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#251f1b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+
+                          <button 
+                            onClick={(e) => toggleFavorite(e, concept.id)}
+                            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition z-20"
+                          >
+                            <svg className={`w-4 h-4 ${isFavorited ? 'fill-[#ff4d4d] text-[#ff4d4d]' : 'text-white'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                          </button>
+
+                          {/* Bottom Text */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-4 text-left z-20">
+                             <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
+                             <span className="text-white/80 text-[10px] md:text-xs font-medium tracking-wide block truncate mt-0.5">{concept.description}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Empty placeholder cards — shown before Generate is clicked */}
+                  <div className="flex-1 min-h-0 flex gap-3 w-full">
+                    {[1, 2].map((n) => (
+                      <div key={n} className="flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center ring-1 ring-inset ring-white/12 relative overflow-hidden">
+                        <div className="flex flex-col items-center gap-2 opacity-40">
+                          <svg className="w-8 h-8 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
                           </svg>
-                        )}
+                          <span className="text-white/30 text-[11px] font-medium">Click Generate</span>
+                        </div>
                       </div>
-
-                      {/* Top-Right: Favorite Icon */}
-                      <button 
-                        onClick={(e) => toggleFavorite(e, concept.id)}
-                        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition z-20"
-                      >
-                        <svg className={`w-4 h-4 ${isFavorited ? 'fill-[#ff4d4d] text-[#ff4d4d]' : 'text-white'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                      </button>
-
-                      {/* Bottom Text */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-4 text-left z-20">
-                         <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
-                         <span className="text-white/80 text-[10px] md:text-xs font-medium tracking-wide block truncate mt-0.5">{concept.description}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {/* Bottom Row */}
-              <div className="flex-1 min-h-0 flex gap-3 w-full">
-                {MOCK_CONCEPTS[currentStepName]?.slice(2, 4).map((concept) => {
-                  const isSelected = selectedConcepts[currentStepName].some(c => c.id === concept.id);
-                  const isFavorited = favorites.includes(concept.id);
-                  
-                  return (
-                    <div 
-                      key={concept.id} 
-                      onClick={() => toggleSelection(currentStepName, concept)}
-                      className={`flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center p-0 transition-all duration-300 cursor-pointer group relative overflow-hidden ${isSelected ? 'ring-1 ring-inset ring-[#f2dad0]/80 shadow-[0_0_15px_rgba(242,218,208,0.12)] z-10' : 'ring-1 ring-inset ring-white/12 hover:ring-[#f2dad0]/40 hover:bg-white/[0.07]'}`}
-                    >
-                      <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-500" style={{ backgroundImage: `url(${concept.image})` }} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      
-                      {/* Selection Overlay */}
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-[#f2dad0]/5 mix-blend-screen z-10 pointer-events-none" />
-                      )}
-                      
-                      {/* Top-Left: Selection Indicator */}
-                      <div className={`absolute top-3 left-3 w-5 h-5 rounded-full flex items-center justify-center z-20 transition-all duration-300 ${isSelected ? 'bg-[#f2dad0]' : 'bg-transparent border border-white/40 group-hover:border-white/70'}`}>
-                        {isSelected && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#251f1b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
+                    ))}
+                  </div>
+                  <div className="flex-1 min-h-0 flex gap-3 w-full">
+                    {[3, 4].map((n) => (
+                      <div key={n} className="flex-1 h-full rounded-[18px] bg-white/[0.03] backdrop-blur-md flex flex-col items-center justify-center text-center ring-1 ring-inset ring-white/12 relative overflow-hidden">
+                        <div className="flex flex-col items-center gap-2 opacity-40">
+                          <svg className="w-8 h-8 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
                           </svg>
-                        )}
+                          <span className="text-white/30 text-[11px] font-medium">Click Generate</span>
+                        </div>
                       </div>
-
-                      <button 
-                        onClick={(e) => toggleFavorite(e, concept.id)}
-                        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 transition z-20"
-                      >
-                        <svg className={`w-4 h-4 ${isFavorited ? 'fill-[#ff4d4d] text-[#ff4d4d]' : 'text-white'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                      </button>
-
-                      {/* Bottom Text */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-4 text-left z-20">
-                         <span className="text-white font-bold text-sm md:text-base tracking-wide drop-shadow-md block truncate">{concept.title}</span>
-                         <span className="text-white/80 text-[10px] md:text-xs font-medium tracking-wide block truncate mt-0.5">{concept.description}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Footer */}
