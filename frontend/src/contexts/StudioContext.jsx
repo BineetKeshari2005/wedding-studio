@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 import { 
   createStudioProject, 
   getStudioProject, 
+  getStudioProjects,
   updateStudioProject, 
   saveSelection, 
   getMoodboard 
@@ -17,14 +18,7 @@ export const JOURNEY_STEPS = [
   "Photo Booth",
 ];
 
-const STORAGE_KEYS = {
-  projectId: "studio_projectId",
-  selectedConcepts: "studio_selectedConcepts",
-  completedSections: "studio_completedSections",
-  favorites: "studio_favorites",
-  currentSection: "studio_currentSection",
-  preferences: "studio_preferences"
-};
+const getStorageKey = (key, userId) => `studio_${key}_${userId || 'anonymous'}`;
 
 const DEFAULT_SELECTED = {
   Entry: [],
@@ -56,37 +50,49 @@ function saveToStorage(key, value) {
 const StudioContext = createContext(null);
 
 export function StudioProvider({ children }) {
-  const { isAuthenticated } = useAuth();
-  const [projectId, setProjectId] = useState(() => loadFromStorage(STORAGE_KEYS.projectId, null));
+  const { user, isAuthenticated } = useAuth();
+  const userId = user?.uid;
+
+  const [projectId, setProjectId] = useState(() => loadFromStorage(getStorageKey('projectId', userId), null));
   const [loadingProject, setLoadingProject] = useState(false);
 
   const [selectedConcepts, setSelectedConcepts] = useState(() =>
-    loadFromStorage(STORAGE_KEYS.selectedConcepts, DEFAULT_SELECTED)
+    loadFromStorage(getStorageKey('selectedConcepts', userId), DEFAULT_SELECTED)
   );
 
   const [completedSections, setCompletedSections] = useState(() =>
-    loadFromStorage(STORAGE_KEYS.completedSections, [])
+    loadFromStorage(getStorageKey('completedSections', userId), [])
   );
 
   const [favorites, setFavorites] = useState(() =>
-    loadFromStorage(STORAGE_KEYS.favorites, [])
+    loadFromStorage(getStorageKey('favorites', userId), [])
   );
 
   const [currentSection, setCurrentSection] = useState(() => 
-    loadFromStorage(STORAGE_KEYS.currentSection, "Entry")
+    loadFromStorage(getStorageKey('currentSection', userId), "Entry")
   );
 
   const [preferences, setPreferences] = useState(() => 
-    loadFromStorage(STORAGE_KEYS.preferences, {})
+    loadFromStorage(getStorageKey('preferences', userId), {})
   );
 
+  // Reset state when user changes
+  useEffect(() => {
+    setProjectId(loadFromStorage(getStorageKey('projectId', userId), null));
+    setSelectedConcepts(loadFromStorage(getStorageKey('selectedConcepts', userId), DEFAULT_SELECTED));
+    setCompletedSections(loadFromStorage(getStorageKey('completedSections', userId), []));
+    setFavorites(loadFromStorage(getStorageKey('favorites', userId), []));
+    setCurrentSection(loadFromStorage(getStorageKey('currentSection', userId), "Entry"));
+    setPreferences(loadFromStorage(getStorageKey('preferences', userId), {}));
+  }, [userId]);
+
   // Sync state to local storage immediately for fast reload
-  useEffect(() => { saveToStorage(STORAGE_KEYS.projectId, projectId); }, [projectId]);
-  useEffect(() => { saveToStorage(STORAGE_KEYS.selectedConcepts, selectedConcepts); }, [selectedConcepts]);
-  useEffect(() => { saveToStorage(STORAGE_KEYS.completedSections, completedSections); }, [completedSections]);
-  useEffect(() => { saveToStorage(STORAGE_KEYS.favorites, favorites); }, [favorites]);
-  useEffect(() => { saveToStorage(STORAGE_KEYS.currentSection, currentSection); }, [currentSection]);
-  useEffect(() => { saveToStorage(STORAGE_KEYS.preferences, preferences); }, [preferences]);
+  useEffect(() => { saveToStorage(getStorageKey('projectId', userId), projectId); }, [projectId, userId]);
+  useEffect(() => { saveToStorage(getStorageKey('selectedConcepts', userId), selectedConcepts); }, [selectedConcepts, userId]);
+  useEffect(() => { saveToStorage(getStorageKey('completedSections', userId), completedSections); }, [completedSections, userId]);
+  useEffect(() => { saveToStorage(getStorageKey('favorites', userId), favorites); }, [favorites, userId]);
+  useEffect(() => { saveToStorage(getStorageKey('currentSection', userId), currentSection); }, [currentSection, userId]);
+  useEffect(() => { saveToStorage(getStorageKey('preferences', userId), preferences); }, [preferences, userId]);
 
   // Load project from backend on mount or auth change
   useEffect(() => {
@@ -148,11 +154,19 @@ export function StudioProvider({ children }) {
     if (!isAuthenticated) return null;
     if (projectId) return projectId;
     try {
+      // First try to fetch an existing project for the user to handle cross-device logins
+      const projects = await getStudioProjects();
+      if (projects && projects.length > 0) {
+        const existingPid = projects[0].id;
+        setProjectId(existingPid);
+        return existingPid;
+      }
+      // If no existing project, create a new one
       const p = await createStudioProject({ name: "My Wedding Vision" });
       setProjectId(p.id);
       return p.id;
     } catch (err) {
-      console.error("Failed to create studio project", err);
+      console.error("Failed to ensure studio project", err);
       return null;
     }
   };
@@ -174,12 +188,6 @@ export function StudioProvider({ children }) {
             isFavorite: c.isFavorite || false
           }))
         });
-      } else {
-        // Empty array - we could add an API to delete section concepts, but 
-        // saveSelection deletes existing ones first, so saving an empty list might fail schema validation if min(1).
-        // Let's pass an empty array if validation allows, otherwise we might need a delete endpoint.
-        // wait, saveSelection validation has `.min(1, 'At least one concept is required')`.
-        // For now, let's skip backend sync if empty, or we can handle it later.
       }
     } catch (err) {
       console.error("Failed to sync concepts to backend", err);
